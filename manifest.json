@@ -1,12 +1,36 @@
 {
   "manifest_version": 3,
   "name": "Flow Image Bulk Downloader",
-  "version": "0.1.0",
-  "description": "Simple extension to crawl the current Google Flow page and download all discovered images.",
-  "permissions": ["activeTab", "scripting", "downloads"],
+  "version": "0.2.0",
+  "description": "Wizard-based side panel to scan Google Flow projects and download all generated images in one ZIP.",
+  "permissions": ["activeTab", "scripting", "downloads", "sidePanel", "tabs"],
   "host_permissions": ["https://*.google.com/*", "https://*.googleusercontent.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "action": {
     "default_title": "Flow Image Bulk Downloader",
-    "default_popup": "popup.html"
-  }
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://labs.google/fx/tools/flow/project/*"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ]
 }

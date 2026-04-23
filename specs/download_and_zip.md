@@ -8,7 +8,7 @@ Replace the current "one download per image" popup with a full wizard-style side
 
 ## 2. Reference Script
 
-The following console script is the functional reference for all image-discovery, fetching, ZIP-building, and download logic. It should be stored in the repository as `reference/console-script.js` (not loaded by the extension — purely for documentation). All content-script logic must reproduce its behavior.
+The following console script is the functional reference for all image-discovery, fetching, ZIP-building, and download logic. It should be stored in the repository in `ref/` (not loaded by the extension — purely for documentation). All content-script logic must reproduce its behavior.
 
 ```js
 /**
@@ -288,8 +288,8 @@ flow-bulk-downloader/
 
 ```
 flow-bulk-downloader/
-├── reference/
-│   └── console-script.js        ← NEW — the reference script (not loaded by extension)
+├── ref/
+│   └── [ref scripts]
 ├── icons/
 │   ├── icon-16.png              ← NEW — toolbar icon (gray/inactive variant)
 │   ├── icon-32.png              ← NEW
@@ -509,7 +509,7 @@ No longer needed; replaced by `sidepanel.js` + `content-script.js` + `background
 
 ### 5.10 `README.md` — MODIFY
 
-Update to reflect the new architecture, new install/usage instructions, and the wizard-based UX. Mention the reference script in `reference/`.
+Update to reflect the new architecture, new install/usage instructions, and the wizard-based UX. Mention the reference script in `ref/`.
 
 ---
 
@@ -609,7 +609,7 @@ Replace the current "one download per image" popup with a full wizard-style side
 
 ## 2. Reference Script
 
-The following console script is the functional reference for all image-discovery, fetching, ZIP-building, and download logic. It should be stored in the repository as `reference/console-script.js` (not loaded by the extension — purely for documentation). All content-script logic must reproduce its behavior.
+The following console script is the functional reference for all image-discovery, fetching, ZIP-building, and download logic. It should be stored in the repository as `ref/` (not loaded by the extension — purely for documentation). All content-script logic must reproduce its behavior.
 
 ```js
 /**
@@ -889,8 +889,8 @@ flow-bulk-downloader/
 
 ```
 flow-bulk-downloader/
-├── reference/
-│   └── console-script.js        ← NEW — the reference script (not loaded by extension)
+├── ref/
+│   └── [ref scripts]
 ├── icons/
 │   ├── icon-16.png              ← NEW — toolbar icon (gray/inactive variant)
 │   ├── icon-32.png              ← NEW
@@ -1110,7 +1110,7 @@ No longer needed; replaced by `sidepanel.js` + `content-script.js` + `background
 
 ### 5.10 `README.md` — MODIFY
 
-Update to reflect the new architecture, new install/usage instructions, and the wizard-based UX. Mention the reference script in `reference/`.
+Update to reflect the new architecture, new install/usage instructions, and the wizard-based UX. Mention the reference script in `ref/`.
 
 ---
 

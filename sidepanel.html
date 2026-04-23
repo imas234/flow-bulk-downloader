@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flow Bulk Downloader</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <div class="ambient" aria-hidden="true">
+      <div class="ambient-grid"></div>
+      <div class="ambient-glow"></div>
+      <div class="ambient-grain"></div>
+    </div>
+
+    <div id="app" data-phase="loading">
+      <header class="app-bar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="brand-text">
+            <span class="brand-title">Flow</span>
+            <span class="brand-sep">/</span>
+            <span class="brand-sub">Bulk&nbsp;Downloader</span>
+          </div>
+        </div>
+        <div class="app-tag">
+          <span class="tag-dot"></span>
+          <span>v0.2 &middot; MV3</span>
+        </div>
+      </header>
+
+      <main class="app-main">
+        <div id="view-loading" class="view">
+          <div class="view-index"><span class="idx-num">00</span><em>INITIALIZE</em></div>
+          <div class="status">
+            <span class="spinner"></span>
+            <span>Establishing link&hellip;</span>
+          </div>
+        </div>
+
+        <div id="view-empty" class="view hidden">
+          <div class="view-index"><span class="idx-num">&mdash;</span><em>STANDBY</em></div>
+          <div class="empty-state">
+            <h2>No Flow project detected</h2>
+            <p class="muted">
+              Open a Google Flow project to scan and compile its generated images.
+            </p>
+            <p class="example-url">labs.google/fx/tools/flow/project/&lt;id&gt;</p>
+          </div>
+        </div>
+
+        <div id="view-ready" class="view hidden">
+          <div class="view-index"><span class="idx-num">01</span><em>READY</em></div>
+          <h2>Bulk collect imagery</h2>
+          <p class="muted">
+            Sweep the active Flow project and compile every generated frame into a single archive.
+          </p>
+          <button id="btn-scan">
+            <span>Scan for images</span>
+            <span class="btn-arrow" aria-hidden="true">&rarr;</span>
+          </button>
+        </div>
+
+        <div id="view-scanning" class="view hidden">
+          <div class="view-index"><span class="idx-num">02</span><em>SCANNING</em></div>
+          <h2>Scanning project</h2>
+          <div class="status">
+            <span class="spinner"></span>
+            <span id="scan-text">Scrolling and collecting images&hellip;</span>
+          </div>
+          <div class="scan-trace" aria-hidden="true"></div>
+          <p class="muted small">Keep this tab active &mdash; navigation will interrupt the sweep.</p>
+        </div>
+
+        <div id="view-confirm" class="view hidden">
+          <div class="view-index"><span class="idx-num">03</span><em>CONFIRM</em></div>
+          <h2>Images found</h2>
+          <p id="confirm-count" class="muted"></p>
+          <label for="zip-name">Archive name</label>
+          <input type="text" id="zip-name" autocomplete="off" spellcheck="false" />
+          <button id="btn-download">
+            <span>Download archive</span>
+            <span class="btn-arrow" aria-hidden="true">&darr;</span>
+          </button>
+          <button id="btn-rescan" class="secondary">Re-scan project</button>
+        </div>
+
+        <div id="view-downloading" class="view hidden">
+          <div class="view-index"><span class="idx-num">04</span><em>TRANSFER</em></div>
+          <h2>Downloading</h2>
+          <div class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar"></div>
+            <div class="progress-ticks" aria-hidden="true"></div>
+          </div>
+          <p id="progress-text" class="mono-line">0 / 0 images fetched</p>
+          <p id="progress-failed" class="hidden">0 failed</p>
+          <button id="btn-cancel" class="danger">Cancel transfer</button>
+        </div>
+
+        <div id="view-done" class="view hidden">
+          <div class="view-index"><span class="idx-num">&check;</span><em>COMPLETE</em></div>
+          <h2>Archive ready</h2>
+          <p id="done-text" class="muted"></p>
+          <button id="btn-new">Start new project</button>
+        </div>
+      </main>
+
+      <footer class="app-status" aria-live="polite">
+        <span class="status-dot"></span>
+        <span class="status-label"></span>
+      </footer>
+
+      <div id="notice" class="notice hidden" data-kind="">
+        <p id="notice-text"></p>
+        <button id="btn-dismiss-notice" class="link">Dismiss</button>
+      </div>
+    </div>
+
+    <script src="sidepanel.js"></script>
+  </body>
+</html>

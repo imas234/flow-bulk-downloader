@@ -10,7 +10,7 @@ Add a **Delete All** wizard to the existing side panel, alongside the Download w
 
 ## 2. Reference Script
 
-Store as `reference/console-delete-script.js` in the repository (not loaded by the extension — documentation only).
+Stored in `ref` in the repository (not loaded by the extension — documentation only).
 
 ```js
 /**
@@ -269,9 +269,8 @@ Building on the download wizard spec, these are the additional/modified files:
 
 ```
 flow-bulk-downloader/
-├── reference/
-│   ├── console-script.js            ← (from download spec)
-│   └── console-delete-script.js     ← NEW — the delete reference script
+├── ref/
+│   ├── [ref scripts]
 ├── icons/                            ← (unchanged from download spec)
 ├── manifest.json                     ← MODIFY (no new permissions needed)
 ├── background.js                     ← MODIFY — add delete message relay
