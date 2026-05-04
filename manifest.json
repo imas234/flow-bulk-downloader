@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Flow Image Bulk Downloader",
-  "version": "0.2.0",
-  "description": "Wizard-based side panel to scan Google Flow projects and download all generated images in one ZIP.",
+  "version": "0.3.0",
+  "description": "Wizard-based side panel to scan Google Flow projects and bulk download or delete generated images.",
   "permissions": ["activeTab", "scripting", "downloads", "sidePanel", "tabs"],
   "host_permissions": ["https://*.google.com/*", "https://*.googleusercontent.com/*"],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background/index.js",
+    "type": "module"
   },
   "icons": {
     "16": "icons/icon-16.png",
@@ -29,7 +30,15 @@
   "content_scripts": [
     {
       "matches": ["https://labs.google/fx/tools/flow/project/*"],
-      "js": ["content-script.js"],
+      "js": [
+        "content/constants.js",
+        "content/dom.js",
+        "content/zip.js",
+        "content/scan.js",
+        "content/download.js",
+        "content/delete.js",
+        "content/index.js"
+      ],
       "run_at": "document_idle"
     }
   ]

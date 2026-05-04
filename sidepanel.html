@@ -19,7 +19,7 @@
       <div class="ambient-grain"></div>
     </div>
 
-    <div id="app" data-phase="loading">
+    <div id="app" data-phase="loading" data-mode="download">
       <header class="app-bar">
         <div class="brand">
           <div class="brand-mark" aria-hidden="true">
@@ -28,14 +28,37 @@
           <div class="brand-text">
             <span class="brand-title">Flow</span>
             <span class="brand-sep">/</span>
-            <span class="brand-sub">Bulk&nbsp;Downloader</span>
+            <span class="brand-sub">Bulk&nbsp;Ops</span>
           </div>
         </div>
         <div class="app-tag">
           <span class="tag-dot"></span>
-          <span>v0.2 &middot; MV3</span>
+          <span>v0.3 &middot; MV3</span>
         </div>
       </header>
+
+      <nav id="tab-bar" role="tablist">
+        <button
+          id="tab-download"
+          class="tab active"
+          role="tab"
+          aria-selected="true"
+          data-tab="download"
+        >
+          <span class="tab-glyph" aria-hidden="true">&darr;</span>
+          <span>Download</span>
+        </button>
+        <button
+          id="tab-delete"
+          class="tab"
+          role="tab"
+          aria-selected="false"
+          data-tab="delete"
+        >
+          <span class="tab-glyph" aria-hidden="true">&times;</span>
+          <span>Delete all</span>
+        </button>
+      </nav>
 
       <main class="app-main">
         <div id="view-loading" class="view">
@@ -51,66 +74,171 @@
           <div class="empty-state">
             <h2>No Flow project detected</h2>
             <p class="muted">
-              Open a Google Flow project to scan and compile its generated images.
+              Open a Google Flow project to scan and manage its generated images.
             </p>
             <p class="example-url">labs.google/fx/tools/flow/project/&lt;id&gt;</p>
           </div>
         </div>
 
-        <div id="view-ready" class="view hidden">
-          <div class="view-index"><span class="idx-num">01</span><em>READY</em></div>
-          <h2>Bulk collect imagery</h2>
-          <p class="muted">
-            Sweep the active Flow project and compile every generated frame into a single archive.
-          </p>
-          <button id="btn-scan">
-            <span>Scan for images</span>
-            <span class="btn-arrow" aria-hidden="true">&rarr;</span>
-          </button>
-        </div>
-
-        <div id="view-scanning" class="view hidden">
-          <div class="view-index"><span class="idx-num">02</span><em>SCANNING</em></div>
-          <h2>Scanning project</h2>
-          <div class="status">
-            <span class="spinner"></span>
-            <span id="scan-text">Scrolling and collecting images&hellip;</span>
+        <!-- ===== Download panel ===== -->
+        <section id="panel-download" class="panel">
+          <div id="view-ready" class="view hidden">
+            <div class="view-index"><span class="idx-num">01</span><em>READY</em></div>
+            <h2>Bulk collect imagery</h2>
+            <p class="muted">
+              Sweep the active Flow project and compile every generated frame into a single archive.
+            </p>
+            <button id="btn-scan">
+              <span>Scan for images</span>
+              <span class="btn-arrow" aria-hidden="true">&rarr;</span>
+            </button>
           </div>
-          <div class="scan-trace" aria-hidden="true"></div>
-          <p class="muted small">Keep this tab active &mdash; navigation will interrupt the sweep.</p>
-        </div>
 
-        <div id="view-confirm" class="view hidden">
-          <div class="view-index"><span class="idx-num">03</span><em>CONFIRM</em></div>
-          <h2>Images found</h2>
-          <p id="confirm-count" class="muted"></p>
-          <label for="zip-name">Archive name</label>
-          <input type="text" id="zip-name" autocomplete="off" spellcheck="false" />
-          <button id="btn-download">
-            <span>Download archive</span>
-            <span class="btn-arrow" aria-hidden="true">&darr;</span>
-          </button>
-          <button id="btn-rescan" class="secondary">Re-scan project</button>
-        </div>
-
-        <div id="view-downloading" class="view hidden">
-          <div class="view-index"><span class="idx-num">04</span><em>TRANSFER</em></div>
-          <h2>Downloading</h2>
-          <div class="progress-bar-container">
-            <div id="progress-bar" class="progress-bar"></div>
-            <div class="progress-ticks" aria-hidden="true"></div>
+          <div id="view-scanning" class="view hidden">
+            <div class="view-index"><span class="idx-num">02</span><em>SCANNING</em></div>
+            <h2>Scanning project</h2>
+            <div class="status">
+              <span class="spinner"></span>
+              <span id="scan-text">Scrolling and collecting images&hellip;</span>
+            </div>
+            <div class="scan-trace" aria-hidden="true"></div>
+            <p class="muted small">Keep this tab active &mdash; navigation will interrupt the sweep.</p>
           </div>
-          <p id="progress-text" class="mono-line">0 / 0 images fetched</p>
-          <p id="progress-failed" class="hidden">0 failed</p>
-          <button id="btn-cancel" class="danger">Cancel transfer</button>
-        </div>
 
-        <div id="view-done" class="view hidden">
-          <div class="view-index"><span class="idx-num">&check;</span><em>COMPLETE</em></div>
-          <h2>Archive ready</h2>
-          <p id="done-text" class="muted"></p>
-          <button id="btn-new">Start new project</button>
-        </div>
+          <div id="view-confirm" class="view hidden">
+            <div class="view-index"><span class="idx-num">03</span><em>CONFIRM</em></div>
+            <h2>Images found</h2>
+            <p id="confirm-count" class="muted"></p>
+            <label for="zip-name">Archive name</label>
+            <input type="text" id="zip-name" autocomplete="off" spellcheck="false" />
+            <button id="btn-download">
+              <span>Download archive</span>
+              <span class="btn-arrow" aria-hidden="true">&darr;</span>
+            </button>
+            <button id="btn-rescan" class="secondary">Re-scan project</button>
+          </div>
+
+          <div id="view-downloading" class="view hidden">
+            <div class="view-index"><span class="idx-num">04</span><em>TRANSFER</em></div>
+            <h2>Downloading</h2>
+            <div class="progress-bar-container">
+              <div id="progress-bar" class="progress-bar"></div>
+              <div class="progress-ticks" aria-hidden="true"></div>
+            </div>
+            <p id="progress-text" class="mono-line">0 / 0 images fetched</p>
+            <p id="progress-failed" class="hidden">0 failed</p>
+            <button id="btn-cancel" class="danger">Cancel transfer</button>
+          </div>
+
+          <div id="view-done" class="view hidden">
+            <div class="view-index"><span class="idx-num">&check;</span><em>COMPLETE</em></div>
+            <h2>Archive ready</h2>
+            <p id="done-text" class="muted"></p>
+            <button id="btn-new">Start new project</button>
+          </div>
+        </section>
+
+        <!-- ===== Delete panel ===== -->
+        <section id="panel-delete" class="panel hidden">
+          <div id="view-del-ready" class="view hidden">
+            <div class="view-index"><span class="idx-num">01</span><em>TARGET</em></div>
+            <h2>Delete all images</h2>
+            <p class="muted">
+              Permanently remove every generated image in this Flow project, one batch at a time.
+            </p>
+            <p class="warning-text">
+              This action cannot be undone.
+            </p>
+            <button id="btn-del-scan" class="danger">
+              <span>Scan &amp; count images</span>
+              <span class="btn-arrow" aria-hidden="true">&rarr;</span>
+            </button>
+          </div>
+
+          <div id="view-del-scanning" class="view hidden">
+            <div class="view-index"><span class="idx-num">02</span><em>SCANNING</em></div>
+            <h2>Counting images</h2>
+            <div class="status">
+              <span class="spinner"></span>
+              <span id="del-scan-text">Scrolling and counting images&hellip;</span>
+            </div>
+            <div class="scan-trace danger-trace" aria-hidden="true"></div>
+            <p class="muted small">Keep this tab active &mdash; navigation will interrupt the sweep.</p>
+          </div>
+
+          <div id="view-del-confirm" class="view hidden">
+            <div class="view-index"><span class="idx-num">03</span><em>CONFIRM</em></div>
+            <h2>Confirm deletion</h2>
+            <div class="confirm-box">
+              <p id="del-confirm-count" class="mono-line"></p>
+              <p class="warning-text small">
+                All images will be permanently deleted batch by batch. This cannot be undone.
+              </p>
+            </div>
+            <label for="del-confirm-input">Type <strong>DELETE</strong> to confirm</label>
+            <input
+              type="text"
+              id="del-confirm-input"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="DELETE"
+            />
+            <button id="btn-del-start" class="danger" disabled>
+              <span>Delete all images</span>
+              <span class="btn-arrow" aria-hidden="true">&times;</span>
+            </button>
+            <button id="btn-del-back" class="secondary">Cancel</button>
+          </div>
+
+          <div id="view-del-deleting" class="view hidden">
+            <div class="view-index"><span class="idx-num">04</span><em>DELETING</em></div>
+            <h2>Deleting batches</h2>
+            <div class="counter-block" aria-live="polite">
+              <p id="del-progress-text" class="counter">&mdash;</p>
+              <p id="del-progress-label" class="counter-label">preparing</p>
+            </div>
+            <p id="del-current-batch" class="now-line"></p>
+            <div class="progress-bar-container">
+              <div id="del-progress-bar" class="progress-bar danger-bar indeterminate"></div>
+            </div>
+            <p id="del-progress-detail" class="failure-line"></p>
+            <button id="btn-del-cancel" class="secondary">Stop after current batch</button>
+          </div>
+
+          <div id="view-del-verifying" class="view hidden">
+            <div class="view-index"><span class="idx-num">05</span><em>VERIFYING</em></div>
+            <h2>Verifying</h2>
+            <div class="status">
+              <span class="spinner"></span>
+              <span id="del-verify-text">Re-counting remaining images&hellip;</span>
+            </div>
+            <div class="scan-trace danger-trace" aria-hidden="true"></div>
+          </div>
+
+          <div id="view-del-done" class="view hidden">
+            <div class="view-index"><span class="idx-num">&check;</span><em>COMPLETE</em></div>
+            <h2 id="del-done-title">Deletion complete</h2>
+            <div id="del-summary">
+              <p class="summary-row">
+                <span class="summary-label">Before</span>
+                <span id="del-summary-before" class="summary-value mono-line"></span>
+              </p>
+              <p class="summary-row">
+                <span class="summary-label">Batches deleted</span>
+                <span id="del-summary-batches" class="summary-value mono-line"></span>
+              </p>
+              <p id="del-summary-stuck-row" class="summary-row hidden">
+                <span class="summary-label">Stuck</span>
+                <span id="del-summary-stuck" class="summary-value mono-line"></span>
+              </p>
+              <p class="summary-row">
+                <span class="summary-label">Remaining</span>
+                <span id="del-summary-after" class="summary-value mono-line"></span>
+              </p>
+            </div>
+            <button id="btn-del-reset" class="secondary">Done</button>
+          </div>
+        </section>
       </main>
 
       <footer class="app-status" aria-live="polite">
@@ -124,6 +252,6 @@
       </div>
     </div>
 
-    <script src="sidepanel.js"></script>
+    <script type="module" src="sidepanel/index.js"></script>
   </body>
 </html>

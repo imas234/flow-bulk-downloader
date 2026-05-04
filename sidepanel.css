@@ -250,6 +250,97 @@ body {
   animation: mark-pulse 2.4s var(--ease-in-out) infinite;
 }
 
+/* ---------- Tab bar ---------------------------------------------------- */
+
+#tab-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+#tab-bar.hidden {
+  display: none !important;
+}
+
+.tab {
+  position: relative;
+  width: auto;
+  margin: 0;
+  padding: 9px 12px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition: color 180ms var(--ease-out),
+    background 180ms var(--ease-out), border-color 180ms var(--ease-out);
+}
+
+.tab::before {
+  display: none;
+}
+
+/* Accent bar under the active tab. Thin, hairline — fades in rather than
+   sliding so we never fight the flex layout for positioning. */
+.tab::after {
+  content: "";
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: 2px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0;
+  transform: scaleX(0.2);
+  transform-origin: center;
+  transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out);
+}
+
+.tab:hover {
+  color: var(--text-0);
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: none;
+}
+
+.tab.active {
+  color: var(--text-0);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--line-2);
+}
+
+.tab.active::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+#app[data-mode="delete"] #tab-delete.active {
+  color: #ffd8dd;
+  border-color: rgba(255, 77, 99, 0.35);
+  background: rgba(255, 77, 99, 0.06);
+}
+
+#app[data-mode="delete"] #tab-delete.active::after {
+  background: var(--danger);
+  box-shadow: 0 0 6px rgba(255, 77, 99, 0.6);
+}
+
+.tab-glyph {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.85;
+  transform: translateY(0.5px);
+}
+
 /* ---------- Views ------------------------------------------------------ */
 
 .app-main {
@@ -360,6 +451,7 @@ p.small {
   letter-spacing: 0.04em;
   color: var(--text-1);
   margin: 6px 0 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- Form elements --------------------------------------------- */
@@ -683,6 +775,295 @@ button.link::before {
   text-transform: uppercase;
   color: var(--warning);
   margin: -6px 0 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+#progress-text {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Delete wizard --------------------------------------------- */
+
+/* Ratio counter block — large tabular numeral + uppercase mono label. Used
+   during deletion; designed to read like an instrument gauge. */
+.counter-block {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 2px 0 12px;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.025),
+      rgba(255, 255, 255, 0.008)
+    );
+  position: relative;
+  overflow: hidden;
+}
+
+.counter-block::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--danger);
+  box-shadow: 0 0 8px rgba(255, 77, 99, 0.4);
+  animation: stripe-pulse 1.6s var(--ease-in-out) infinite;
+}
+
+@keyframes stripe-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.95; }
+}
+
+.counter {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: var(--text-0);
+  font-variant-numeric: tabular-nums;
+}
+
+.counter-label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.failure-line {
+  margin: -4px 0 12px;
+  min-height: 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--warning);
+  font-variant-numeric: tabular-nums;
+}
+
+.failure-line:empty {
+  margin: 0;
+  min-height: 0;
+}
+
+/* "now → <batch label>" indicator below the counter. The user can verify
+   which batch the deleter currently has its eye on — invaluable for
+   diagnosing batches that Flow silently refuses to remove. */
+.now-line {
+  margin: -2px 0 12px;
+  padding: 2px 0 2px 10px;
+  min-height: 14px;
+  border-left: 1px solid rgba(255, 77, 99, 0.35);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  word-break: break-all;
+}
+
+.now-line::first-letter {
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.now-line:empty {
+  margin: 0;
+  min-height: 0;
+  padding: 0;
+  border-left-width: 0;
+}
+
+.warning-text {
+  color: #ffb4bd;
+  font-weight: 500;
+}
+
+.warning-text.small {
+  font-size: 12px;
+}
+
+.confirm-box {
+  padding: 12px;
+  margin: 0 0 14px;
+  border: 1px solid rgba(255, 77, 99, 0.45);
+  border-radius: 4px;
+  background: rgba(255, 77, 99, 0.06);
+}
+
+.confirm-box p {
+  margin: 0;
+}
+
+.confirm-box p + p {
+  margin-top: 8px;
+}
+
+input[type="text"].armed,
+#del-confirm-input.armed {
+  border-color: rgba(255, 77, 99, 0.75);
+  background: rgba(255, 77, 99, 0.08);
+  color: #ffd8dd;
+  letter-spacing: 0.18em;
+  box-shadow:
+    0 0 0 1px rgba(255, 77, 99, 0.35),
+    0 0 14px rgba(255, 77, 99, 0.22);
+}
+
+#del-confirm-input:focus {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+#del-confirm-input.armed:focus {
+  box-shadow:
+    0 0 0 1px rgba(255, 77, 99, 0.5),
+    0 0 18px rgba(255, 77, 99, 0.3);
+}
+
+/* Danger-colored scan trace for the delete scan view */
+.scan-trace.danger-trace::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 77, 99, 0.85),
+    transparent
+  );
+}
+
+/* Danger variant of the progress bar. */
+.progress-bar.danger-bar {
+  background: var(--danger);
+  box-shadow: 0 0 8px rgba(255, 77, 99, 0.5);
+}
+
+/* Indeterminate bar: unknown total, so pulse full-width. */
+.progress-bar.indeterminate {
+  width: 100% !important;
+  opacity: 0.75;
+  animation: bar-pulse 1.4s var(--ease-in-out) infinite;
+}
+
+.progress-bar.indeterminate::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 77, 99, 0.9),
+    transparent
+  );
+}
+
+@keyframes bar-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.9; }
+}
+
+button.danger[disabled] {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+button[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Summary card for the delete-done view — receipt-style rows with hairline
+   dotted separators and tabular-aligned numerics. */
+#del-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 4px 0 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.02),
+      rgba(255, 255, 255, 0.005)
+    );
+  position: relative;
+}
+
+#del-summary::before,
+#del-summary::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--line-2) 0 2px,
+    transparent 2px 5px
+  );
+  opacity: 0.5;
+}
+
+#del-summary::before {
+  top: -1px;
+}
+
+#del-summary::after {
+  bottom: -1px;
+}
+
+.summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0;
+  padding: 7px 0;
+  font-size: 12px;
+  color: var(--text-1);
+  gap: 14px;
+}
+
+.summary-row + .summary-row {
+  border-top: 1px dotted var(--line-2);
+}
+
+.summary-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  flex: 0 0 auto;
+}
+
+.summary-value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-0);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-value[data-state="clean"] {
+  color: #9affc7;
+  text-shadow: 0 0 10px rgba(154, 255, 199, 0.3);
+}
+
+.summary-value[data-state="warn"] {
+  color: var(--warning);
 }
 
 /* ---------- Notice ----------------------------------------------------- */
@@ -749,20 +1130,37 @@ button.link::before {
 }
 
 /* Drive footer label + dot color entirely from app[data-phase] */
-#app[data-phase="loading"]     .status-label::after { content: "Establishing link"; }
-#app[data-phase="empty"]       .status-label::after { content: "Standby"; }
-#app[data-phase="ready"]       .status-label::after { content: "Ready"; }
-#app[data-phase="scanning"]    .status-label::after { content: "Scanning"; }
-#app[data-phase="confirm"]     .status-label::after { content: "Awaiting confirmation"; }
-#app[data-phase="downloading"] .status-label::after { content: "Transferring"; }
-#app[data-phase="done"]        .status-label::after { content: "Complete"; }
+#app[data-phase="loading"]       .status-label::after { content: "Establishing link"; }
+#app[data-phase="empty"]         .status-label::after { content: "Standby"; }
+#app[data-phase="ready"]         .status-label::after { content: "Ready"; }
+#app[data-phase="scanning"]      .status-label::after { content: "Scanning"; }
+#app[data-phase="confirm"]       .status-label::after { content: "Awaiting confirmation"; }
+#app[data-phase="downloading"]   .status-label::after { content: "Transferring"; }
+#app[data-phase="done"]          .status-label::after { content: "Complete"; }
+#app[data-phase="del-ready"]     .status-label::after { content: "Ready"; }
+#app[data-phase="del-scanning"]  .status-label::after { content: "Counting"; }
+#app[data-phase="del-confirm"]   .status-label::after { content: "Awaiting confirmation"; }
+#app[data-phase="del-deleting"]  .status-label::after { content: "Deleting"; }
+#app[data-phase="del-verifying"] .status-label::after { content: "Verifying"; }
+#app[data-phase="del-done"]      .status-label::after { content: "Complete"; }
 
 #app[data-phase="scanning"] .status-dot,
-#app[data-phase="downloading"] .status-dot {
+#app[data-phase="downloading"] .status-dot,
+#app[data-phase="del-scanning"] .status-dot,
+#app[data-phase="del-deleting"] .status-dot,
+#app[data-phase="del-verifying"] .status-dot {
   animation: mark-pulse 1.1s var(--ease-in-out) infinite;
 }
 
-#app[data-phase="done"] .status-dot {
+#app[data-phase="del-scanning"] .status-dot,
+#app[data-phase="del-deleting"] .status-dot,
+#app[data-phase="del-verifying"] .status-dot {
+  background: var(--danger);
+  box-shadow: 0 0 6px rgba(255, 77, 99, 0.7);
+}
+
+#app[data-phase="done"] .status-dot,
+#app[data-phase="del-done"] .status-dot {
   background: #9affc7;
   box-shadow: 0 0 8px rgba(154, 255, 199, 0.55);
 }
