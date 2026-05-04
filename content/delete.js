@@ -10,9 +10,11 @@
     findScrollContainer,
     findImageGroupDeleteButtons,
     findAllDeleteButtons,
+    findBuggedDeleteButtons,
     findConfirmDeleteButton,
     clickAllCancelButtons,
     batchKey,
+    buggedBatchKey,
     batchLabel,
     batchExistsByKey,
   } = FB.dom;
@@ -57,13 +59,15 @@
         });
         return;
       }
-      const { images, batches } = await scrollAndCount(
+      const { images, batches, bugged, buggedBatches } = await scrollAndCount(
         container,
-        ({ images, batches }) => {
+        ({ images, batches, bugged, buggedBatches }) => {
           chrome.runtime.sendMessage({
             type: "DELETE_SCAN_PROGRESS",
             images,
             batches,
+            bugged,
+            buggedBatches,
           });
         }
       );
@@ -71,6 +75,8 @@
         type: "DELETE_SCAN_RESULT",
         images,
         batches,
+        bugged,
+        buggedBatches,
       });
     } catch (error) {
       chrome.runtime.sendMessage({
@@ -84,18 +90,21 @@
     }
   }
 
-  // Collect candidate {btn, key} pairs from the current DOM, image-group
-  // toolbars first, falling back to collection-level toolbars.
-  function liveCandidates(stuckKeys) {
+  // Collect candidate {btn, key} pairs from the current DOM. Three tiers:
+  // image-group toolbars (have Reuse Prompt), then collection toolbars,
+  // then "bugged project" tiles that have no toolbar at all — those use
+  // text-derived keys via buggedBatchKey(). stuckNodes is a WeakSet safety
+  // net for null-keyed bugged buttons (text too short to derive a stable
+  // key) so we don't infinite-loop on them.
+  function liveCandidates(stuckKeys, stuckNodes) {
     let btns = findImageGroupDeleteButtons();
     if (btns.length === 0) btns = findAllDeleteButtons();
+    if (btns.length === 0) btns = findBuggedDeleteButtons();
     const out = [];
     for (const btn of btns) {
+      if (stuckNodes.has(btn)) continue;
       const tb = btn.closest('[role="toolbar"]');
-      const key = batchKey(tb);
-      // Drop batches we've already given up on. Without a key we have no
-      // way to identify a stuck batch, so we let those through (worst case
-      // we retry, but the same delete button click should still progress).
+      const key = tb ? batchKey(tb) : buggedBatchKey(btn);
       if (key && stuckKeys.has(key)) continue;
       out.push({ btn, key });
     }
@@ -104,8 +113,8 @@
 
   // Find the next non-stuck delete target, scrolling forward as needed.
   // Returns null only when we've reached the bottom with nothing left.
-  async function findNextLive(container, stuckKeys) {
-    let live = liveCandidates(stuckKeys);
+  async function findNextLive(container, stuckKeys, stuckNodes) {
+    let live = liveCandidates(stuckKeys, stuckNodes);
     if (live.length > 0) return live[0];
 
     while (true) {
@@ -113,19 +122,20 @@
       container.scrollBy({ top: SCROLL_STEP, behavior: "instant" });
       await sleep(SCROLL_PAUSE);
       if (container.scrollTop === before) return null;
-      live = liveCandidates(stuckKeys);
+      live = liveCandidates(stuckKeys, stuckNodes);
       if (live.length > 0) return live[0];
     }
   }
 
   async function runDeleteLoop(container) {
     const stuckKeys = new Set();
+    const stuckNodes = new WeakSet();
     let rounds = 0;
     let failed = 0;
     let stuck = 0;
 
     while (!state.aborted) {
-      const target = await findNextLive(container, stuckKeys);
+      const target = await findNextLive(container, stuckKeys, stuckNodes);
       if (!target) break;
 
       const { btn, key } = target;
@@ -145,23 +155,28 @@
       // Verify deletion: if the same content key still exists anywhere in
       // the DOM, Flow didn't actually remove the batch. Mark it stuck so
       // the next iteration skips past it instead of looping on btns[0].
+      // Bugged tiles without a derivable key fall back to node identity —
+      // if the same <button> is still in the DOM, the click did nothing.
       let actuallyDeleted = ok;
       let isStuck = false;
       if (ok) {
-        if (key) {
-          await sleep(300);
-          if (batchExistsByKey(key)) {
-            isStuck = true;
-            actuallyDeleted = false;
-            stuck++;
-            stuckKeys.add(key);
-          }
+        await sleep(300);
+        const stillThere = key
+          ? batchExistsByKey(key)
+          : document.contains(btn);
+        if (stillThere) {
+          isStuck = true;
+          actuallyDeleted = false;
+          stuck++;
+          if (key) stuckKeys.add(key);
+          else stuckNodes.add(btn);
         }
       } else {
         // Dialog never appeared (or another failure). Skip this batch on
         // future iterations so we don't infinite-loop on it.
         failed++;
         if (key) stuckKeys.add(key);
+        else stuckNodes.add(btn);
       }
 
       chrome.runtime.sendMessage({
@@ -214,11 +229,13 @@
       if (verifyContainer) {
         const result = await scrollAndCount(
           verifyContainer,
-          ({ images, batches }) => {
+          ({ images, batches, bugged, buggedBatches }) => {
             chrome.runtime.sendMessage({
               type: "DELETE_VERIFY_PROGRESS",
               images,
               batches,
+              bugged,
+              buggedBatches,
             });
           }
         );

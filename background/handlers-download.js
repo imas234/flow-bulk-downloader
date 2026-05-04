@@ -165,14 +165,11 @@ export const downloadHandlers = {
     const tabId = sender.tab?.id;
     try {
       const downloadId = await chrome.downloads.download({
-        url: message.blobUrl,
+        url: message.dataUrl,
         filename: message.zipName,
         saveAs: true,
       });
       if (tabId) {
-        chrome.tabs
-          .sendMessage(tabId, { type: "REVOKE_BLOB", blobUrl: message.blobUrl })
-          .catch(() => {});
         const state = getState(tabId);
         setState(tabId, {
           phase: "done",

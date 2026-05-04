@@ -82,6 +82,23 @@
     return out;
   }
 
+  // "Bugged" Flow projects render batch tiles whose images never load and
+  // whose toolbar markup is missing — the per-tile Delete button is just a
+  // visible <button> with the literal textContent "deleteDelete" (Material
+  // Icons ligature + label) sitting outside any [role="toolbar"]. Catch those
+  // explicitly so we can still drive the deletion flow.
+  function findBuggedDeleteButtons() {
+    const out = [];
+    for (const btn of document.querySelectorAll("button")) {
+      if (btn.closest('[role="toolbar"]')) continue;
+      const text = (btn.textContent || "").trim();
+      if (!/^delete\s*delete$/i.test(text)) continue;
+      if (btn.offsetParent === null) continue;
+      out.push(btn);
+    }
+    return out;
+  }
+
   // Content-derived stable identifier for a batch. Used both for accurate
   // count dedupe across virtualized scroll (a Set of keys converges on the
   // true total) and for stuck-detection — if the same key still exists in
@@ -115,7 +132,7 @@
   // which batch is currently being processed.
   function batchLabel(key) {
     if (!key) return "?";
-    if (key.startsWith("t:")) {
+    if (key.startsWith("t:") || key.startsWith("b:")) {
       const txt = key.slice(2);
       return `"${txt.slice(0, 28)}${txt.length > 28 ? "…" : ""}"`;
     }
@@ -125,6 +142,33 @@
       if (short) return short;
     } catch {}
     return key.slice(0, 12);
+  }
+
+  // Bugged batches have no toolbar and no image — derive a content-stable key
+  // by walking up to the nearest ancestor that uniquely scopes this delete
+  // button (no other "deleteDelete" trigger lives inside it) and using its
+  // text. The "b:" prefix keeps these distinct from URL-keyed normal batches.
+  function buggedBatchKey(btn) {
+    if (!btn) return null;
+    let el = btn.parentElement;
+    let depth = 0;
+    while (el && depth < 8 && el !== document.body) {
+      const otherDeletes = [...el.querySelectorAll("button")].filter(
+        (b) =>
+          b !== btn &&
+          /^delete\s*delete$/i.test((b.textContent || "").trim())
+      ).length;
+      if (otherDeletes > 0) break;
+      const text = (el.textContent || "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .replace(/delete\s*delete/gi, "")
+        .trim();
+      if (text.length >= 8) return `b:${text.slice(0, 160)}`;
+      el = el.parentElement;
+      depth++;
+    }
+    return null;
   }
 
   function collectVisibleBatchKeys() {
@@ -137,10 +181,26 @@
     return keys;
   }
 
+  function collectVisibleBuggedBatchKeys() {
+    const keys = [];
+    for (const btn of findBuggedDeleteButtons()) {
+      const key = buggedBatchKey(btn);
+      if (key) keys.push(key);
+    }
+    return keys;
+  }
+
   // Does any toolbar in the current DOM resolve to this key? Used to detect
-  // stuck batches (we tried to delete it but it's still here).
+  // stuck batches (we tried to delete it but it's still here). Bugged keys
+  // ("b:" prefix) are checked against bugged delete buttons instead.
   function batchExistsByKey(key) {
     if (!key) return false;
+    if (key.startsWith("b:")) {
+      for (const btn of findBuggedDeleteButtons()) {
+        if (buggedBatchKey(btn) === key) return true;
+      }
+      return false;
+    }
     for (const tb of document.querySelectorAll('[role="toolbar"]')) {
       if (batchKey(tb) === key) return true;
     }
@@ -189,9 +249,12 @@
     toolbarHasReuse,
     findImageGroupDeleteButtons,
     findAllDeleteButtons,
+    findBuggedDeleteButtons,
     batchKey,
+    buggedBatchKey,
     batchLabel,
     collectVisibleBatchKeys,
+    collectVisibleBuggedBatchKeys,
     batchExistsByKey,
     findConfirmDeleteButton,
     clickAllCancelButtons,

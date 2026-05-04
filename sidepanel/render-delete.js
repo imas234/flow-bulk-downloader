@@ -12,10 +12,11 @@ export function renderDeleteView(state) {
     case "scanning": {
       const i = state.deleteScanFound;
       const b = state.deleteScanBatches;
+      const bugged = !!state.deleteBugged;
       els.delScanText.textContent =
         i === 0 && b === 0
           ? "Scrolling and counting images…"
-          : `Counted ${describeScanCounts(i, b)} so far…`;
+          : `Counted ${describeScanCounts(i, b, { bugged })} so far…${bugged ? " (bugged project — using batch-only fallback)" : ""}`;
       showView("del-scanning");
       break;
     }
@@ -23,7 +24,11 @@ export function renderDeleteView(state) {
     case "confirm": {
       const i = state.deleteInitialCount;
       const b = state.deleteInitialBatches;
-      els.delConfirmCount.textContent = `${describeScanCounts(i, b)} will be deleted.`;
+      const bugged = !!state.deleteBugged;
+      const summary = describeScanCounts(i, b, { bugged });
+      els.delConfirmCount.textContent = bugged
+        ? `${summary} will be deleted. Images failed to load — falling back to batch-only deletion.`
+        : `${summary} will be deleted.`;
       // Preserve what the user is typing across re-renders. Only wipe the
       // input when we're entering confirm from a different phase.
       if (panelState.getLastDeletePhase() !== "confirm") {
@@ -82,22 +87,25 @@ export function renderDeleteView(state) {
     case "verifying": {
       const i = state.deleteVerifyFound;
       const b = state.deleteVerifyBatches;
+      const bugged = !!state.deleteBugged;
       els.delVerifyText.textContent =
         i === 0 && b === 0
           ? "Re-counting remaining items…"
-          : `${describeScanCounts(i, b)} remaining…`;
+          : `${describeScanCounts(i, b, { bugged })} remaining…`;
       showView("del-verifying");
       break;
     }
 
     case "done": {
       const s = state.deleteSummary || {};
+      const bugged = !!state.deleteBugged;
       els.delDoneTitle.textContent = s.cancelled
         ? "Deletion stopped"
         : "Deletion complete";
       els.delSummaryBefore.textContent = describeScanCounts(
         s.initialCount || 0,
-        s.initialBatches || 0
+        s.initialBatches || 0,
+        { bugged }
       );
       els.delSummaryBatches.textContent = `${s.rounds || 0}${s.failed ? ` (${s.failed} failed)` : ""}`;
 
@@ -114,7 +122,7 @@ export function renderDeleteView(state) {
         els.delSummaryAfter.textContent = "0 ✓";
         els.delSummaryAfter.dataset.state = "clean";
       } else {
-        els.delSummaryAfter.textContent = `${describeScanCounts(remainingImages, remainingBatches)} ⚠`;
+        els.delSummaryAfter.textContent = `${describeScanCounts(remainingImages, remainingBatches, { bugged })} ⚠`;
         els.delSummaryAfter.dataset.state = "warn";
       }
       showView("del-done");

@@ -8,7 +8,10 @@ export function pluralize(n, singular, plural) {
 // when the list is virtualized and the toolbars never co-rendered. The
 // phrasing here is deliberately vague about that because surfacing the
 // caveat in UI copy is noisier than it's worth.
-export function describeScanCounts(images, batches) {
+export function describeScanCounts(images, batches, opts = {}) {
+  if (opts.bugged && batches > 0) {
+    return `${pluralize(batches, "batch", "batches")} (images failed to load)`;
+  }
   if (images > 0 && batches > 0) {
     return `${pluralize(images, "image")} across ${pluralize(batches, "batch", "batches")}`;
   }

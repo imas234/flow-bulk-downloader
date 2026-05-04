@@ -35,9 +35,6 @@
       case "DELETE_CANCEL":
         del.abort();
         break;
-      case "REVOKE_BLOB":
-        if (message.blobUrl) URL.revokeObjectURL(message.blobUrl);
-        break;
     }
   });
 })();

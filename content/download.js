@@ -109,10 +109,11 @@
 
     zipEntries.sort((a, b) => a.name.localeCompare(b.name));
     const zipBlob = buildZip(zipEntries);
-    const blobUrl = URL.createObjectURL(zipBlob);
+    const { blobToDataURL } = FB.blobToDataURL;
+    const dataUrl = await blobToDataURL(zipBlob);
     chrome.runtime.sendMessage({
       type: "ZIP_READY",
-      blobUrl,
+      dataUrl,
       zipName,
       sizeMB: (zipBlob.size / 1024 / 1024).toFixed(1),
     });

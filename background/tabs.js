@@ -27,6 +27,7 @@ const CONTENT_SCRIPT_FILES = [
   "content/constants.js",
   "content/dom.js",
   "content/zip.js",
+  "content/blob-to-dataurl.js",
   "content/scan.js",
   "content/download.js",
   "content/delete.js",
@@ -120,6 +121,32 @@ export async function syncTab(tabId, url) {
   }
 }
 
+// Track loading state per tab to detect refreshes (same URL, loading -> complete)
+const loadingTabs = new Set();
+
+function isActiveOperation(state) {
+  return (
+    state.phase === "scanning" ||
+    state.phase === "downloading" ||
+    state.deletePhase === "scanning" ||
+    state.deletePhase === "deleting" ||
+    state.deletePhase === "verifying"
+  );
+}
+
+function refreshStoppedNotice(previous) {
+  if (previous.phase === "scanning" || previous.deletePhase === "scanning") {
+    return { kind: "error", message: "Scan stopped — page was refreshed." };
+  }
+  if (previous.phase === "downloading") {
+    return { kind: "error", message: "Download stopped — page was refreshed." };
+  }
+  if (previous.deletePhase === "deleting" || previous.deletePhase === "verifying") {
+    return { kind: "error", message: "Deletion stopped — page was refreshed." };
+  }
+  return null;
+}
+
 export function installLifecycleListeners() {
   chrome.runtime.onInstalled.addListener(async () => {
     const tabs = await chrome.tabs.query({});
@@ -131,8 +158,26 @@ export function installLifecycleListeners() {
   chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (typeof changeInfo.url === "string") {
       await syncTab(tabId, changeInfo.url);
+    } else if (changeInfo.status === "loading") {
+      loadingTabs.add(tabId);
     } else if (changeInfo.status === "complete") {
-      await syncTab(tabId, tab.url || "");
+      const wasLoading = loadingTabs.has(tabId);
+      loadingTabs.delete(tabId);
+
+      const url = tab.url || "";
+      const previous = getState(tabId);
+
+      // Same URL + was loading = refresh. Reset active operations since
+      // the content script (which does the actual work) was killed.
+      if (wasLoading && url === previous.url && isActiveOperation(previous)) {
+        setState(tabId, {
+          ...freshState(url),
+          notice: refreshStoppedNotice(previous),
+        });
+        return;
+      }
+
+      await syncTab(tabId, url);
     }
   });
 
@@ -146,6 +191,7 @@ export function installLifecycleListeners() {
   });
 
   chrome.tabs.onRemoved.addListener((tabId) => {
+    loadingTabs.delete(tabId);
     dropState(tabId);
   });
 

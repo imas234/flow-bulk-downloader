@@ -35,6 +35,7 @@ export function freshState(url = "") {
     deleteRounds: 0,
     deleteFailed: 0,
     deleteStuck: 0,
+    deleteBugged: false,
     deleteCurrentLabel: null,
     deleteVerifyFound: 0,
     deleteVerifyBatches: 0,

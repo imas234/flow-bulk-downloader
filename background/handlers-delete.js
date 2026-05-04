@@ -16,6 +16,7 @@ const RESET_FIELDS = {
   deleteRounds: 0,
   deleteFailed: 0,
   deleteStuck: 0,
+  deleteBugged: false,
   deleteCurrentLabel: null,
   deleteVerifyFound: 0,
   deleteVerifyBatches: 0,
@@ -64,6 +65,8 @@ export const deleteHandlers = {
       deleteRounds: 0,
       deleteFailed: 0,
       deleteStuck: 0,
+      // Preserve deleteBugged from scan — the panel uses it to surface the
+      // fallback-mode hint while deletion runs.
       deleteCurrentLabel: null,
       deleteVerifyFound: 0,
       deleteVerifyBatches: 0,
@@ -117,6 +120,7 @@ export const deleteHandlers = {
       setState(tabId, {
         deleteScanFound: message.images || 0,
         deleteScanBatches: message.batches || 0,
+        deleteBugged: !!message.bugged,
       });
     }
     return { ok: true };
@@ -129,6 +133,7 @@ export const deleteHandlers = {
     if (state.deletePhase !== "scanning") return { ok: true };
     const images = message.images || 0;
     const batches = message.batches || 0;
+    const bugged = !!message.bugged;
     if (message.error || (images === 0 && batches === 0)) {
       setState(tabId, {
         deletePhase: "ready",
@@ -136,6 +141,7 @@ export const deleteHandlers = {
         deleteScanBatches: 0,
         deleteInitialCount: 0,
         deleteInitialBatches: 0,
+        deleteBugged: false,
         notice: {
           kind: "error",
           message: message.error || "No image batches found — nothing to delete.",
@@ -148,6 +154,7 @@ export const deleteHandlers = {
         deleteScanBatches: batches,
         deleteInitialCount: images,
         deleteInitialBatches: batches,
+        deleteBugged: bugged,
         notice: null,
       });
     }
@@ -193,6 +200,8 @@ export const deleteHandlers = {
       deletePhase: "verifying",
       deleteVerifyFound: message.images || 0,
       deleteVerifyBatches: message.batches || 0,
+      deleteBugged:
+        typeof message.bugged === "boolean" ? message.bugged : state.deleteBugged,
     });
     return { ok: true };
   },
