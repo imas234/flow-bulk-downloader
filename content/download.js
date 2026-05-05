@@ -109,12 +109,28 @@
 
     zipEntries.sort((a, b) => a.name.localeCompare(b.name));
     const zipBlob = buildZip(zipEntries);
-    const { blobToDataURL } = FB.blobToDataURL;
-    const dataUrl = await blobToDataURL(zipBlob);
+
+    // Trigger the save from the page itself: a page-scoped blob URL +
+    // <a download> click is the only path that survives both incognito
+    // (where blob:chrome-extension:// URLs from the SW don't resolve for
+    // chrome.downloads) and large archives (where sending a base64 data
+    // URL through chrome.runtime.sendMessage / chrome.downloads.download
+    // hits payload-size cliffs and silently fails). The SW only owns the
+    // state-machine handoff to "done".
+    const blobUrl = URL.createObjectURL(zipBlob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = zipName;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+
     chrome.runtime.sendMessage({
       type: "ZIP_READY",
-      dataUrl,
       zipName,
+      count: zipEntries.length,
       sizeMB: (zipBlob.size / 1024 / 1024).toFixed(1),
     });
   }

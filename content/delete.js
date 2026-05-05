@@ -133,6 +133,12 @@
     let rounds = 0;
     let failed = 0;
     let stuck = 0;
+    // Successful deletions, separately from `rounds` (which counts every
+    // attempt, including stuck ones). Stuck attempts must not inflate the
+    // user-visible progress — that's where the "overcount" comes from on
+    // SW resume, since the rehydrate gap is when stuck attempts pile up
+    // before the verify step catches them.
+    let succeeded = 0;
 
     while (!state.aborted) {
       const target = await findNextLive(container, stuckKeys, stuckNodes);
@@ -170,6 +176,8 @@
           stuck++;
           if (key) stuckKeys.add(key);
           else stuckNodes.add(btn);
+        } else {
+          succeeded++;
         }
       } else {
         // Dialog never appeared (or another failure). Skip this batch on
@@ -183,6 +191,7 @@
         type: "DELETE_BATCH_COMPLETE",
         round: rounds,
         success: actuallyDeleted,
+        succeeded,
         failed,
         stuck,
         currentKey: key,
@@ -196,7 +205,7 @@
       await sleep(SCROLL_PAUSE);
     }
 
-    return { rounds, failed, stuck };
+    return { rounds, failed, stuck, succeeded };
   }
 
   async function handleDeleteStart(initialCount, initialBatches) {
@@ -217,7 +226,7 @@
       container.scrollTop = 0;
       await sleep(SCROLL_PAUSE);
 
-      const { rounds, failed, stuck } = await runDeleteLoop(container);
+      const { rounds, failed, stuck, succeeded } = await runDeleteLoop(container);
       const cancelled = state.aborted;
 
       // Phase 3: verify. Not aborted by cancellation — the user wants the
@@ -248,6 +257,7 @@
         initialCount,
         initialBatches,
         rounds,
+        succeeded,
         failed,
         stuck,
         finalCount,

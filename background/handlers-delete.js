@@ -14,6 +14,7 @@ const RESET_FIELDS = {
   deleteInitialCount: 0,
   deleteInitialBatches: 0,
   deleteRounds: 0,
+  deleteSucceeded: 0,
   deleteFailed: 0,
   deleteStuck: 0,
   deleteBugged: false,
@@ -63,6 +64,7 @@ export const deleteHandlers = {
     setState(tabId, {
       deletePhase: "deleting",
       deleteRounds: 0,
+      deleteSucceeded: 0,
       deleteFailed: 0,
       deleteStuck: 0,
       // Preserve deleteBugged from scan — the panel uses it to surface the
@@ -178,8 +180,17 @@ export const deleteHandlers = {
     if (!tabId) return { ok: true };
     const state = getState(tabId);
     if (state.deletePhase !== "deleting") return { ok: true };
+    // The content-script counters are authoritative — every message is a
+    // full snapshot of {round, succeeded, failed, stuck}, so the SW just
+    // mirrors them. This is what reconciles the panel after a SW wake-up:
+    // even if the persisted state was stale, the next message replaces it
+    // with the loop's current truth.
     setState(tabId, {
       deleteRounds: message.round || state.deleteRounds,
+      deleteSucceeded:
+        typeof message.succeeded === "number"
+          ? message.succeeded
+          : state.deleteSucceeded,
       deleteFailed:
         typeof message.failed === "number" ? message.failed : state.deleteFailed,
       deleteStuck:
@@ -216,6 +227,7 @@ export const deleteHandlers = {
         initialCount: message.initialCount || 0,
         initialBatches: message.initialBatches || 0,
         rounds: message.rounds || 0,
+        succeeded: message.succeeded || 0,
         failed: message.failed || 0,
         stuck: message.stuck || 0,
         finalCount: message.finalCount || 0,

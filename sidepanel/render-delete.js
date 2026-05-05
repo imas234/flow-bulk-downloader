@@ -41,10 +41,20 @@ export function renderDeleteView(state) {
     }
 
     case "deleting": {
-      const { deleteRounds, deleteFailed, deleteInitialBatches } = state;
-      // initialBatches is a lower bound (virtualized list), so grow it if the
-      // actual rounds exceed the estimate. Denominator never lies about the
-      // minimum remaining work.
+      const {
+        deleteRounds,
+        deleteSucceeded,
+        deleteInitialBatches,
+      } = state;
+      // Show successful deletes (not attempts) as the progress numerator —
+      // stuck attempts are real but they didn't remove anything from the
+      // project, so counting them inflates the bar past reality. Older
+      // states without `deleteSucceeded` fall back to rounds so existing
+      // sessions don't regress to 0/N. Denominator grows with attempts so
+      // it never lies about the minimum remaining work in a virtualized
+      // list whose initial scan undercounted.
+      const succeeded =
+        typeof deleteSucceeded === "number" ? deleteSucceeded : deleteRounds;
       const total =
         deleteInitialBatches > 0
           ? Math.max(deleteInitialBatches, deleteRounds)
@@ -53,21 +63,21 @@ export function renderDeleteView(state) {
 
       if (total > 0) {
         bar.classList.remove("indeterminate");
-        const pct = Math.min(100, Math.round((deleteRounds / total) * 100));
+        const pct = Math.min(100, Math.round((succeeded / total) * 100));
         bar.style.width = `${pct}%`;
-        els.delProgressText.textContent = `${deleteRounds} / ${total}`;
+        els.delProgressText.textContent = `${succeeded} / ${total}`;
         els.delProgressLabel.textContent =
-          deleteRounds === 1 ? "batch deleted" : "batches deleted";
+          succeeded === 1 ? "batch deleted" : "batches deleted";
       } else {
         bar.classList.add("indeterminate");
         bar.style.width = "";
-        if (deleteRounds === 0) {
+        if (succeeded === 0 && deleteRounds === 0) {
           els.delProgressText.textContent = "—";
           els.delProgressLabel.textContent = "preparing";
         } else {
-          els.delProgressText.textContent = String(deleteRounds);
+          els.delProgressText.textContent = String(succeeded);
           els.delProgressLabel.textContent =
-            deleteRounds === 1 ? "batch deleted" : "batches deleted";
+            succeeded === 1 ? "batch deleted" : "batches deleted";
         }
       }
 
@@ -107,7 +117,15 @@ export function renderDeleteView(state) {
         s.initialBatches || 0,
         { bugged }
       );
-      els.delSummaryBatches.textContent = `${s.rounds || 0}${s.failed ? ` (${s.failed} failed)` : ""}`;
+      // Summary mirrors the deleting view: count actually-removed batches,
+      // with attempt count surfaced only when it diverges (i.e. some were
+      // stuck or failed, which the user should see).
+      const sSucceeded =
+        typeof s.succeeded === "number" ? s.succeeded : s.rounds || 0;
+      const extras = [];
+      if (s.failed) extras.push(`${s.failed} failed`);
+      if (s.stuck) extras.push(`${s.stuck} stuck`);
+      els.delSummaryBatches.textContent = `${sSucceeded}${extras.length ? ` (${extras.join(", ")})` : ""}`;
 
       const stuckCount = s.stuck || 0;
       els.delSummaryStuckRow.classList.toggle("hidden", stuckCount === 0);

@@ -4,7 +4,7 @@
   "version": "0.3.0",
   "description": "Wizard-based side panel to scan Google Flow projects and bulk download or delete generated images.",
   "incognito": "split",
-  "permissions": ["activeTab", "scripting", "downloads", "sidePanel", "tabs"],
+  "permissions": ["activeTab", "scripting", "downloads", "sidePanel", "tabs", "storage"],
   "host_permissions": ["https://*.google.com/*", "https://*.googleusercontent.com/*"],
   "background": {
     "service_worker": "background/index.js",
@@ -35,7 +35,6 @@
         "content/constants.js",
         "content/dom.js",
         "content/zip.js",
-        "content/blob-to-dataurl.js",
         "content/scan.js",
         "content/download.js",
         "content/delete.js",

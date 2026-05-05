@@ -255,6 +255,13 @@ body {
   box-shadow: none;
 }
 
+.tab.locked,
+.tab[disabled] {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .tab.active {
   color: var(--text-0);
   background: rgba(255, 255, 255, 0.05);

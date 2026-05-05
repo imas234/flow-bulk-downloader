@@ -1,7 +1,13 @@
 // Top-level render entry: delegates to the download or delete renderer based
 // on state.mode. Every render pass records `lastState` for re-render heuristics.
 
-import { showView, showTabs, setActiveTab, renderNotice } from "./views.js";
+import {
+  showView,
+  showTabs,
+  setActiveTab,
+  renderNotice,
+  lockTabsForActiveOp,
+} from "./views.js";
 import { renderDownloadView } from "./render-download.js";
 import { renderDeleteView } from "./render-delete.js";
 import * as panelState from "./panel-state.js";
@@ -26,6 +32,7 @@ export function render(state) {
   showTabs(true);
   const mode = state.mode === "delete" ? "delete" : "download";
   setActiveTab(mode);
+  lockTabsForActiveOp(state);
 
   if (mode === "delete") {
     renderDeleteView(state);

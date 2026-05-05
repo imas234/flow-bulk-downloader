@@ -2,7 +2,7 @@
 // which tabs are on a Flow project so the action icon, badge, and wizard
 // state stay in sync with SPA navigation.
 
-import { freshState, getState, setState, dropState } from "./state.js";
+import { freshState, getState, setState, dropState, hydrationPromise } from "./state.js";
 
 const FLOW_URL_RE = /^https:\/\/labs\.google\/fx\/tools\/flow\/project\/[^/]+/;
 
@@ -27,7 +27,6 @@ const CONTENT_SCRIPT_FILES = [
   "content/constants.js",
   "content/dom.js",
   "content/zip.js",
-  "content/blob-to-dataurl.js",
   "content/scan.js",
   "content/download.js",
   "content/delete.js",
@@ -149,6 +148,7 @@ function refreshStoppedNotice(previous) {
 
 export function installLifecycleListeners() {
   chrome.runtime.onInstalled.addListener(async () => {
+    await hydrationPromise;
     const tabs = await chrome.tabs.query({});
     await Promise.all(
       tabs.filter((t) => t.id).map((t) => syncTab(t.id, t.url || ""))
@@ -156,6 +156,7 @@ export function installLifecycleListeners() {
   });
 
   chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+    await hydrationPromise;
     if (typeof changeInfo.url === "string") {
       await syncTab(tabId, changeInfo.url);
     } else if (changeInfo.status === "loading") {
@@ -182,6 +183,7 @@ export function installLifecycleListeners() {
   });
 
   chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+    await hydrationPromise;
     try {
       const tab = await chrome.tabs.get(tabId);
       await syncTab(tabId, tab.url || "");
@@ -190,7 +192,8 @@ export function installLifecycleListeners() {
     }
   });
 
-  chrome.tabs.onRemoved.addListener((tabId) => {
+  chrome.tabs.onRemoved.addListener(async (tabId) => {
+    await hydrationPromise;
     loadingTabs.delete(tabId);
     dropState(tabId);
   });

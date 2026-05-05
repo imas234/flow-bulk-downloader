@@ -38,6 +38,40 @@ export function setActiveTab(mode) {
   );
 }
 
+const ACTIVE_DOWNLOAD_PHASES = new Set(["scanning", "downloading"]);
+const ACTIVE_DELETE_PHASES = new Set([
+  "scanning",
+  "deleting",
+  "verifying",
+]);
+
+// Tab clicks during an in-flight op are almost always accidental — the
+// active op stays running in the background, but the panel swaps to the
+// other tab and the user can't see the progress, which reads as "state
+// got reset." Lock the inactive tab while either side has work in flight.
+export function lockTabsForActiveOp(state) {
+  const downloadActive = ACTIVE_DOWNLOAD_PHASES.has(state.phase);
+  const deleteActive = ACTIVE_DELETE_PHASES.has(state.deletePhase);
+  const lock = downloadActive || deleteActive;
+  setTabLocked(buttons.tabDownload, lock && deleteActive);
+  setTabLocked(buttons.tabDelete, lock && downloadActive);
+}
+
+function setTabLocked(btn, locked) {
+  btn.disabled = locked;
+  btn.classList.toggle("locked", locked);
+  if (locked) {
+    btn.setAttribute(
+      "title",
+      "An operation is in progress on the other tab. Cancel or wait for it to finish."
+    );
+    btn.setAttribute("aria-disabled", "true");
+  } else {
+    btn.removeAttribute("title");
+    btn.removeAttribute("aria-disabled");
+  }
+}
+
 export function renderNotice(notice) {
   if (!notice) {
     els.notice.classList.add("hidden");

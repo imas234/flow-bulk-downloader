@@ -162,33 +162,19 @@ export const downloadHandlers = {
   },
 
   async ZIP_READY(message, sender) {
+    // The content script already kicked the browser save via <a download>,
+    // so the SW just transitions state and surfaces the summary.
     const tabId = sender.tab?.id;
-    try {
-      const downloadId = await chrome.downloads.download({
-        url: message.dataUrl,
-        filename: message.zipName,
-        saveAs: true,
-      });
-      if (tabId) {
-        const state = getState(tabId);
-        setState(tabId, {
-          phase: "done",
-          doneSummary: {
-            count: state.downloadProgress.total,
-            sizeMB: message.sizeMB,
-          },
-          downloadProgress: { completed: 0, total: 0, failed: 0 },
-        });
-      }
-      return { ok: true, downloadId };
-    } catch (err) {
-      if (tabId) {
-        setState(tabId, {
-          phase: "confirm",
-          notice: { kind: "error", message: err.message || "Download failed." },
-        });
-      }
-      return { ok: false, error: err.message };
-    }
+    if (!tabId) return { ok: true };
+    const state = getState(tabId);
+    setState(tabId, {
+      phase: "done",
+      doneSummary: {
+        count: message.count || state.downloadProgress.total,
+        sizeMB: message.sizeMB,
+      },
+      downloadProgress: { completed: 0, total: 0, failed: 0 },
+    });
+    return { ok: true };
   },
 };
